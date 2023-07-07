@@ -1,41 +1,25 @@
-import numpy as np
 import pandas as pd
-import sklearn
+import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
-from minisom import MiniSom  
-df = pd.read_csv(r'C:\Users\khanm\Downloads\Mall_Customers.csv')
+import plotly.express as px
+from sklearn.preprocessing import MinMaxScaler
+from minisom import MiniSom
+import plotly.graph_objects as go
+df = pd.read_csv(r"C:\Users\khanm\Mini Project\clustered_customers.csv")
 df.head()
-plt.style.use('fivethirtyeight')
-age = df['Age'].tolist()
-spending_score = df['Spending Score (1-100)'].tolist()
-fig = plt.figure(figsize=(6,6))
-plt.scatter(age, spending_score)
-plt.suptitle("Scatter Plot of Age and Spending Score")
-plt.xlabel("Age")
-plt.ylabel("Spending Score")
-plt.show()
-age = df['Age'].tolist()
-annual_income = df['Annual Income (k$)'].tolist()
-fig = plt.figure(figsize=(6,6))
-plt.scatter(age, annual_income)
-plt.suptitle("Scatter Plot of Age and Annual Income")
-plt.xlabel("Age")
-plt.ylabel("Annual Income (k$)")
-plt.show()
-annual_income = df['Annual Income (k$)'].tolist()
-spending_score = df['Spending Score (1-100)'].tolist()
-fig = plt.figure(figsize=(6,6))
-plt.scatter(annual_income, spending_score)
-plt.suptitle("Scatter Plot of Annual Income & Spending Score")
-plt.xlabel("Annual Income (k$)")
-plt.ylabel("Spending Score (1-100)")
-plt.show()
-df.isnull().sum()
+fig = px.scatter(df, x='Age', y='Spending Score (1-100)', color='Cluster',
+                 title='Scatter Plot of Age and Spending Score')
+fig.show()
+fig = px.scatter(df, x='Age', y='Annual Income (k$)', color='Cluster',
+                 title='Scatter Plot of Age and Annual Income')
+fig.show()
+fig = px.scatter(df, x='Annual Income (k$)', y='Spending Score (1-100)', color='Cluster',
+                 title='Scatter Plot of Annual Income and Spending Score')
+fig.show()
+
 features = df[['Annual Income (k$)', 'Spending Score (1-100)']]
-data = features.values
-data.shape
+scaler = MinMaxScaler()
+data = scaler.fit_transform(features)
 som_shape = (1, 5)
 som = MiniSom(som_shape[0], som_shape[1], data.shape[1], sigma=0.5, learning_rate=0.5)
 max_iter = 1000
@@ -46,12 +30,16 @@ for i in range(max_iter):
     som.update(data[rand_i], som.winner(data[rand_i]), i, max_iter)
     q_error.append(som.quantization_error(data))
     t_error.append(som.topographic_error(data))
-plt.plot(np.arange(max_iter), q_error, label='quantization error')
-plt.plot(np.arange(max_iter), t_error, label='topographic error')
-plt.ylabel('Quantization error')
-plt.xlabel('Iteration index')
-plt.legend()
-plt.show()
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=np.arange(max_iter), y=q_error, mode='lines', name='Quantization error'))
+fig.add_trace(go.Scatter(x=np.arange(max_iter), y=t_error, mode='lines', name='Topographic error'))
+fig.update_layout(
+    title='Quantization and Topographic Error',
+    xaxis_title='Iteration index',
+    yaxis_title='Error',
+    hovermode='x'
+)
+fig.show()
 winner_coordinates = np.array([som.winner(x) for x in data]).T
 cluster_index = np.ravel_multi_index(winner_coordinates, som_shape)
 plt.figure(figsize=(10,8))
@@ -80,7 +68,7 @@ for cluster in range(num_clusters):
     plt.ylabel('Frequency')
 plt.tight_layout()
 plt.show()
-winner_coordinates = np.array([som.winner(x) for x in data]).T
+winner_coordinates = np.array([som.winner(x) for x in data])
 cluster_index = np.ravel_multi_index(winner_coordinates, som_shape)
 cluster_labels = cluster_index + 1
 df['Cluster'] = cluster_labels
