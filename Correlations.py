@@ -12,4 +12,4 @@ for x in ['Age' , 'Annual Income (k$)' , 'Spending Score (1-100)']:
     plt.subplots_adjust(hspace =0.5 , wspace = 0.5)
     sns.distplot(df[x] , bins = 20)
     plt.title('Distplot of {}'.format(x))
-plt.show() 
+plt.show
